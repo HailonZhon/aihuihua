@@ -16,6 +16,8 @@ from src.image_processing.image_processor import ImageProcessor
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Get the logger for pika and set its level to WARNING to reduce output
+logging.getLogger("pika").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
@@ -84,15 +86,13 @@ async def process_image(file_path):
     prompt_workflow["29"]["inputs"]["width"] = 618
     prompt_workflow["29"]["inputs"]["height"] = 884
 
-    # 队列prompt
-    prompt_id = image_processor.queue_prompt(prompt_workflow)
-    if not prompt_id:
-        return None
-
     # 生成 UUID 并发送到队列
     uuid_value = str(uuid.uuid4())
     rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')  # 默认为localhost
     # rabbitmq_host = "localhost"
+
+
+
     try:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
         channel = connection.channel()
@@ -106,7 +106,10 @@ async def process_image(file_path):
         if connection.is_open:
             connection.close()
             logger.info("RabbitMQ connection closed.")
-
+    # 队列prompt
+    prompt_id = image_processor.queue_prompt(prompt_workflow)
+    if not prompt_id:
+        return None
     # 等待处理完成信号
     image_processor.wait_for_image_processed_signal()
 
