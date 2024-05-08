@@ -1,21 +1,23 @@
 version: '3'
 services:
   web:
-    build: ../..
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    build: .
+    command: uvicorn app.ImageProcess.main:app --host 0.0.0.0 --port 8000
     volumes:
       - .:/usr/src/app
     ports:
       - "8000:8000"
     depends_on:
       - rabbitmq
+
   websocket_client:
-    build: ../..
-    command: python WebSocketProcessor.py
+    build: .
+    command: python3 app/WebSocket/WebSocketProcessor.py
     volumes:
       - .:/usr/src/app
     depends_on:
       - rabbitmq
+
   rabbitmq:
     image: "rabbitmq:3-management"
     ports:
