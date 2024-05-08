@@ -53,7 +53,8 @@ class WebSocketProcessor:
 
     @staticmethod
     def notify_main_process():
-        rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
+        # rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
+        rabbitmq_host = "localhost"
         logger.info(f"连接到RabbitMQ主机，地址为：{rabbitmq_host}")
         try:
             connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
@@ -80,7 +81,8 @@ class WebSocketProcessor:
 
 
 if __name__ == "__main__":
-    rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
+    # rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
+    rabbitmq_host = "localhost"
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
     channel = connection.channel()
     channel.queue_declare(queue='uuid_queue')
