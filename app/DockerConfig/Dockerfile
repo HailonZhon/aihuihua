@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 COPY . /usr/src/app
 
 # 安装 requirements.txt 中指定的所有需要的包
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install  -r requirements.txt
 
 # 安装必需的系统工具，并且设置 DNS 服务器
 RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
