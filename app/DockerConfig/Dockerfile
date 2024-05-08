@@ -1,37 +1,39 @@
-# Use an official Python runtime as a parent image
+# 使用官方 Python 运行时作为父镜像
 FROM python:3.9-slim
 
-# Set the working directory in the container
+# 设置工作目录
 WORKDIR /usr/src/app
 
-# Copy the current directory contents into the container at /usr/src/app
+# 将当前目录内容复制到容器的 /usr/src/app
 COPY . /usr/src/app
 
-# Install any needed packages specified in requirements.txt
-RUN pip install -r requirements.txt
+# 安装 requirements.txt 中指定的所有需要的包
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install necessary system tools
-RUN apt-get update && \
+# 安装必需的系统工具，并且设置 DNS 服务器
+RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    echo "nameserver 8.8.4.4" >> /etc/resolv.conf && \
+    apt-get update && \
     apt-get install -y --no-install-recommends apt-utils gnupg curl wget ca-certificates
 
-# Add the RabbitMQ official signing key
+# 添加 RabbitMQ 官方签名密钥
 RUN wget -O /usr/share/keyrings/rabbitmq-archive-keyring.gpg https://packages.rabbitmq.com/rabbitmq-release-signing-key.asc
 
-# Add the RabbitMQ APT repository to your system
+# 添加 RabbitMQ APT 源到系统中
 RUN echo "deb [signed-by=/usr/share/keyrings/rabbitmq-archive-keyring.gpg] http://packages.rabbitmq.com/debian buster main" | tee /etc/apt/sources.list.d/rabbitmq.list
 
-# Install RabbitMQ server
+# 安装 RabbitMQ 服务器
 RUN apt-get update && \
     apt-get install -y rabbitmq-server
 
-# Enable the RabbitMQ management plugin
+# 启用 RabbitMQ 管理插件
 RUN rabbitmq-plugins enable rabbitmq_management
 
-# Make port 8000 available to the world outside this container
+# 对外暴露 8000 端口
 EXPOSE 8000
 
-# Define environment variable
+# 定义环境变量
 ENV NAME World
 
-# Run main.py when the container launches (Adjust the path according to where main.py is located)
+# 容器启动时运行 main.py (根据 main.py 的实际位置调整路径)
 CMD ["uvicorn", "app.ImageProcess.main:app", "--host", "0.0.0.0", "--port", "8000"]
