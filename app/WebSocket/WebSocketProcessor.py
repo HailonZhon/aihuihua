@@ -1,4 +1,6 @@
 import json
+import os
+
 import pika
 import uuid
 import websocket
@@ -44,7 +46,8 @@ class WebSocketProcessor:
 
     def notify_main_process(self):
         # 通知主进程图片处理完成
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')  # 默认为localhost
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
         channel = connection.channel()
         channel.queue_declare(queue='image_processed')
         channel.basic_publish(exchange='', routing_key='image_processed', body='done')
@@ -62,15 +65,18 @@ class WebSocketProcessor:
 
 
 if __name__ == "__main__":
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')  # 默认为localhost
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
     channel = connection.channel()
     channel.queue_declare(queue='uuid_queue')
+    ws_url = os.getenv('WS_URL', 'ws://66.114.112.70:40391/ws?clientId=')
+    print(ws_url)
 
 
     def callback(ch, method, properties, body):
         uuid = body.decode()
         ws_processor = WebSocketProcessor()
-        ws_processor.connect_websocket(config["ws_url"] + uuid)
+        ws_processor.connect_websocket(ws_url + uuid)
         ws_processor.listen_for_completion()
         ws_processor.close_websocket()
 

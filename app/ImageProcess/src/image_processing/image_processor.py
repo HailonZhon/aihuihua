@@ -1,10 +1,9 @@
 import os.path
+import os
 
 import requests
 import json
-import random
 import pika
-from pathlib import Path
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 
@@ -96,7 +95,8 @@ class ImageProcessor:
 
     def wait_for_image_processed_signal(self):
         # 等待 WebSocket 通信程序发送的处理完成信号
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')  # 默认为localhost
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
         channel = connection.channel()
         channel.queue_declare(queue='image_processed')
 

@@ -1,25 +1,35 @@
 version: '3'
 services:
   web:
-    build: .
-    command: uvicorn app.ImageProcess.main:app --host 0.0.0.0 --port 8000
+    build: ../ImageProcess
+    command: main:app --host 0.0.0.0 --port 8000
     volumes:
-      - .:/usr/src/app
+      - ../ImageProcess :/usr/src/app
     ports:
       - "8000:8000"
     depends_on:
       - rabbitmq
+    networks:
+      - internal
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - BASE_URL=https://exuwomf4pougcn-3000.proxy.runpod.net
 
   websocket_client:
-    build: .
-    command: python3 app/WebSocket/WebSocketProcessor.py
+    build: ../WebSocket
+    command: python WebSocketProcessor.py
     volumes:
-      - .:/usr/src/app
+      - ./WebSocket :/usr/src/app
     depends_on:
       - rabbitmq
-
+    networks:
+      - internal
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - WS_URL=ws://66.114.112.70:40391/ws?clientId=
   rabbitmq:
     image: "rabbitmq:3-management"
-    ports:
-      - "15672:15672"
-      - "5672:5672"
+    networks:
+      - internal
+networks:
+  internal:

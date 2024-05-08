@@ -1,5 +1,6 @@
 import datetime
 import json
+import os
 import random
 import uuid
 from pathlib import Path
@@ -38,7 +39,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 UPLOAD_DIR = Path("data/uploaded_images")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-image_processor = ImageProcessor(config["base_url"])
+base_url = os.getenv("BASE_URL")
+image_processor = ImageProcessor(base_url)
 
 
 @app.websocket("/ws")
@@ -84,7 +86,8 @@ async def process_image(file_path):
 
     # 生成 UUID 并发送到队列
     uuid_value = str(uuid.uuid4())
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')  # 默认为localhost
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
     channel = connection.channel()
     channel.queue_declare(queue='uuid_queue')
     channel.basic_publish(exchange='', routing_key='uuid_queue', body=uuid_value)
