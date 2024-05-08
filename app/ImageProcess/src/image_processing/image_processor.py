@@ -6,7 +6,6 @@ import random
 import pika
 from pathlib import Path
 from requests_toolbelt.multipart.encoder import MultipartEncoder
-from config import config
 
 
 class ImageProcessor:
@@ -85,9 +84,9 @@ class ImageProcessor:
         response = requests.get(url, stream=True)
         if response.status_code == 200:
             image_data = response.content
-            if not os.path.exists('output'):
-                os.makedirs('output')
-            with open(f"output/{filename}", "wb") as f:
+            if not os.path.exists('data/output'):
+                os.makedirs('data/output')
+            with open(f"data/output/{filename}", "wb") as f:
                 f.write(image_data)
             print("Image retrieved successfully")
             return image_data

@@ -5,10 +5,10 @@ FROM python:3.9-slim
 WORKDIR /usr/src/app
 
 # Copy the current directory contents into the container at /usr/src/app
-COPY . .
+COPY ../.. .
 
 # Install any needed packages specified in requirements.txt
-RUN pip install fastapi uvicorn aiofiles pika websocket-client requests requests_toolbelt
+RUN pip install fastapi uvicorn aiofiles pika WebSocket-client requests requests_toolbelt
 
 # 安装 RabbitMQ 和其他必需的系统工具
 RUN apt-get update && \

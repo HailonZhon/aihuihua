@@ -2,7 +2,8 @@ import json
 import pika
 import uuid
 import websocket
-from config import config
+
+from AIhuihua.app.WebSocket.config.config import config
 
 
 class WebSocketProcessor:
@@ -25,7 +26,7 @@ class WebSocketProcessor:
                 result = self.ws.recv()
                 if isinstance(result, str):
                     data = json.loads(result)
-                    print(data )
+                    print(data)
                     if data['type'] == 'status' and 'sid' not in data['data']:
                         if data['data']['status']['exec_info']['queue_remaining'] == 0:
                             self.notify_main_process()
@@ -65,12 +66,14 @@ if __name__ == "__main__":
     channel = connection.channel()
     channel.queue_declare(queue='uuid_queue')
 
+
     def callback(ch, method, properties, body):
         uuid = body.decode()
         ws_processor = WebSocketProcessor()
         ws_processor.connect_websocket(config["ws_url"] + uuid)
         ws_processor.listen_for_completion()
         ws_processor.close_websocket()
+
 
     channel.basic_consume(queue='uuid_queue', on_message_callback=callback, auto_ack=True)
     print(' [*] Waiting for UUIDs. To exit press CTRL+C')

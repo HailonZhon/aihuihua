@@ -1,16 +1,17 @@
-import asyncio
 import datetime
 import json
 import random
 import uuid
+from pathlib import Path
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
 from aiofiles import open as aio_open
-from image_processor import ImageProcessor
-from config import config
 import pika
+
+from config.config import config
+from src.image_processing.image_processor import ImageProcessor
 
 app = FastAPI()
 
@@ -34,10 +35,11 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 确保上传目录存在
-UPLOAD_DIR = Path("./uploaded_images")
+UPLOAD_DIR = Path("data/uploaded_images")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-image_processor = ImageProcessor(config["base_url"], config.get("proxy_url"))
+image_processor = ImageProcessor(config["base_url"])
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -57,6 +59,7 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.send_bytes(processed_image)
     except WebSocketDisconnect:
         print("Client disconnected.")
+
 
 async def process_image(file_path):
     # 上传图片到服务器
