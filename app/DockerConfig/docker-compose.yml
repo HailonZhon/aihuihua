@@ -17,6 +17,7 @@ services:
 
   websocket_client:
     build: ../WebSocket
+    restart: always
     volumes:
       - ../WebSocket:/usr/src/app
     depends_on:
