@@ -46,7 +46,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 UPLOAD_DIR = Path("data/uploaded_images")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-base_url = os.getenv("BASE_URL")
+# base_url = os.getenv("BASE_URL")
+base_url = 'http://localhost:3000'
 image_processor = ImageProcessor(base_url)
 
 
