@@ -11,6 +11,8 @@ COPY . /usr/src/app
 RUN pip install -r requirements.txt
 
 # Install necessary system tools
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends apt-utils gnupg curl wget ca-certificates
+#RUN apt-get update && \
+#    apt-get install -y --no-install-recommends apt-utils gnupg curl wget ca-certificates
 
+# Command to run the Uvicorn server
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

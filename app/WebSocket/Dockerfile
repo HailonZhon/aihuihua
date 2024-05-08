@@ -6,11 +6,11 @@ WORKDIR /usr/src/app
 
 # Copy the current directory contents into the container at /usr/src/app
 COPY requirements.txt /usr/src/app
+COPY WebSocketProcessor.py /usr/src/app
 
 # Install any needed packages specified in requirements.txt
 RUN pip install -r requirements.txt
 
-# Install necessary system tools
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends apt-utils gnupg curl wget ca-certificates
-
+# CMD command to test Python execution
+#CMD ["python", "-c", "print('Hello from inside the container!')"]
+CMD ["python","-u","WebSocketProcessor.py"]

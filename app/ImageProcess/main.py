@@ -10,9 +10,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from aiofiles import open as aio_open
 import pika
+import logging
 
-from config.config import config
 from src.image_processing.image_processor import ImageProcessor
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -40,6 +44,7 @@ UPLOAD_DIR = Path("data/uploaded_images")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 base_url = os.getenv("BASE_URL")
+# base_url = "https://exuwomf4pougcn-3000.proxy.runpod.net"
 image_processor = ImageProcessor(base_url)
 
 
@@ -54,13 +59,13 @@ async def websocket_endpoint(websocket: WebSocket):
             # 异步写入文件
             async with aio_open(file_path, 'wb') as f:
                 await f.write(data)
-            print(f"Saved image to {file_path}")
+            logger.info(f"Saved image to {file_path}")
 
             # 处理图片
             processed_image = await process_image(file_path)
             await websocket.send_bytes(processed_image)
     except WebSocketDisconnect:
-        print("Client disconnected.")
+        logger.info("Client disconnected.")
 
 
 async def process_image(file_path):
@@ -87,16 +92,28 @@ async def process_image(file_path):
     # 生成 UUID 并发送到队列
     uuid_value = str(uuid.uuid4())
     rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')  # 默认为localhost
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
-    channel = connection.channel()
-    channel.queue_declare(queue='uuid_queue')
-    channel.basic_publish(exchange='', routing_key='uuid_queue', body=uuid_value)
-    connection.close()
+    # rabbitmq_host = "localhost"
+    try:
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
+        channel = connection.channel()
+        channel.queue_declare(queue='uuid_queue')
+        channel.basic_publish(exchange='', routing_key='uuid_queue', body=uuid_value)
+        logger.info(f"Successfully published UUID {uuid_value} to RabbitMQ.")
+    except Exception as e:
+        logger.error(f"Failed to publish UUID to RabbitMQ: {e}")
+        return None
+    finally:
+        if connection.is_open:
+            connection.close()
+            logger.info("RabbitMQ connection closed.")
 
     # 等待处理完成信号
     image_processor.wait_for_image_processed_signal()
 
     images = image_processor.get_images()
     if images:
+        logger.info(f"Successfully processed images, returning the first image.")
         return images[0]
-    return None
+    else:
+        logger.info("No images processed.")
+        return None

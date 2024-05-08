@@ -1,7 +1,2 @@
-fastapi
-uvicorn
-aiofiles
 pika
 websocket-client
-requests
-requests_toolbelt

@@ -96,6 +96,7 @@ class ImageProcessor:
     def wait_for_image_processed_signal(self):
         # 等待 WebSocket 通信程序发送的处理完成信号
         rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')  # 默认为localhost
+        # rabbitmq_host = "localhost"
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
         channel = connection.channel()
         channel.queue_declare(queue='image_processed')

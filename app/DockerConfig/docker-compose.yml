@@ -2,9 +2,8 @@ version: '3'
 services:
   web:
     build: ../ImageProcess
-    command: main:app --host 0.0.0.0 --port 8000
     volumes:
-      - ../ImageProcess :/usr/src/app
+      - ../ImageProcess:/usr/src/app
     ports:
       - "8000:8000"
     depends_on:
@@ -14,12 +13,12 @@ services:
     environment:
       - RABBITMQ_HOST=rabbitmq
       - BASE_URL=https://exuwomf4pougcn-3000.proxy.runpod.net
+      - PYTHONUNBUFFERED=1
 
   websocket_client:
     build: ../WebSocket
-    command: python WebSocketProcessor.py
     volumes:
-      - ./WebSocket :/usr/src/app
+      - ../WebSocket:/usr/src/app
     depends_on:
       - rabbitmq
     networks:
@@ -27,6 +26,13 @@ services:
     environment:
       - RABBITMQ_HOST=rabbitmq
       - WS_URL=ws://66.114.112.70:40391/ws?clientId=
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 40391))" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
   rabbitmq:
     image: "rabbitmq:3-management"
     networks:

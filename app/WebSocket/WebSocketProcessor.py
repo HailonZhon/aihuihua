@@ -2,11 +2,7 @@ import json
 import os
 
 import pika
-import uuid
 import websocket
-
-from AIhuihua.app.WebSocket.config.config import config
-
 
 class WebSocketProcessor:
     def __init__(self):
@@ -47,6 +43,7 @@ class WebSocketProcessor:
     def notify_main_process(self):
         # 通知主进程图片处理完成
         rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')  # 默认为localhost
+        # rabbitmq_host = "localhost"
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
         channel = connection.channel()
         channel.queue_declare(queue='image_processed')
@@ -65,9 +62,12 @@ class WebSocketProcessor:
 
 
 if __name__ == "__main__":
+    print("kaishile")
     rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')  # 默认为localhost
+    # rabbitmq_host = "localhost"
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
     channel = connection.channel()
+    print(channel)
     channel.queue_declare(queue='uuid_queue')
     ws_url = os.getenv('WS_URL', 'ws://66.114.112.70:40391/ws?clientId=')
     print(ws_url)
