@@ -18,7 +18,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 # 设置 pika 日志级别为 WARNING，减少输出
 logging.getLogger("pika").setLevel(logging.WARNING)
 logging.getLogger("ImageProcessor").setLevel(logging.WARNING)
-
+# 主模块的 logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.ERROR)  # 设置当前模块的日志级别为 WARNING
 app = FastAPI()
 
 # 允许的跨域源列表
@@ -47,6 +49,7 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 base_url = os.getenv("BASE_URL")
 image_processor = ImageProcessor(base_url)
 
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     # 使用 __name__ 来获取当前模块的 logger
@@ -54,40 +57,26 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            start_time = datetime.datetime.now()
             data = await websocket.receive_bytes()
-            file_path = UPLOAD_DIR / f"image_{datetime.datetime.now().isoformat()}.png"
-
-            async with aio_open(file_path, 'wb') as f:
-                await f.write(data)
-            logger.info(f"websocket_endpoint:图片已保存至 {file_path}")
-
-            # 测量文件写入耗时
-            file_write_time = datetime.datetime.now() - start_time
-            logger.info(f"websocket_endpoint:文件写入耗时 {file_write_time.total_seconds()} 秒")
-
             # 处理图片
             start_time = datetime.datetime.now()
-            processed_image = await process_image(file_path, logger)
+            processed_image = await process_image(data, logger)
             total_processing_time = datetime.datetime.now() - start_time
-            logger.info(f"websocket_endpoint:总处理图片耗时 {total_processing_time.total_seconds()} 秒")
+            logger.error(f"websocket_endpoint:总处理图片耗时 {total_processing_time.total_seconds()} 秒")
 
             await websocket.send_bytes(processed_image)
-
-            # 测量总处理耗时
-            total_processing_time = datetime.datetime.now() - start_time
-            logger.info(f"websocket_endpoint:总处理耗时 {total_processing_time.total_seconds()} 秒")
 
     except WebSocketDisconnect:
         logger.info("websocket_endpoint:客户端已断开连接")
 
-async def process_image(file_path, logger):
+
+async def process_image(data, logger):
     start_time = datetime.datetime.now()
 
     # 上传图片到服务器
-    image_name_server = image_processor.upload_image(file_path)
+    image_name_server = image_processor.upload_image(data)
     upload_time = datetime.datetime.now() - start_time
-    logger.info(f"process_image:图片上传耗时 {upload_time.total_seconds()} 秒")
+    logger.warning(f"process_image:图片上传耗时 {upload_time.total_seconds()} 秒")
 
     with open(Path('static/workflow_api_huihua_2_1.json'), 'r') as file:
         prompt_workflow = json.load(file)
@@ -103,16 +92,11 @@ async def process_image(file_path, logger):
     rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
 
     try:
-        start_time = datetime.datetime.now()
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
         channel = connection.channel()
         channel.queue_declare(queue='uuid_queue')
         channel.basic_publish(exchange='', routing_key='uuid_queue', body=uuid_value)
         logger.info(f"process_image:成功将 UUID {uuid_value} 发布到 RabbitMQ")
-
-        # 测量 RabbitMQ 消息发布耗时
-        rabbitmq_publish_time = datetime.datetime.now() - start_time
-        logger.info(f"process_image:RabbitMQ 消息发布耗时 {rabbitmq_publish_time.total_seconds()} 秒")
 
     except Exception as e:
         logger.error(f"process_image:发布 UUID 到 RabbitMQ 失败: {e}")
@@ -129,11 +113,15 @@ async def process_image(file_path, logger):
 
     # 测量队列操作耗时
     queue_time = datetime.datetime.now() - start_time
-    logger.info(f"process_image:队列操作耗时 {queue_time.total_seconds()} 秒")
+    logger.warning(f"process_image:队列操作耗时 {queue_time.total_seconds()} 秒")
 
+    start_time = datetime.datetime.now()
     image_processor.wait_for_image_processed_signal()
 
     images = image_processor.get_images()
+    # 等待结果耗时
+    images_times = datetime.datetime.now() - start_time
+    logger.warning(f"process_image:等待结果耗时 {images_times.total_seconds()} 秒")
     if images:
         logger.info(f"process_image:成功处理图片，返回第一张图片")
         return images[0]

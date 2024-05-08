@@ -4,3 +4,4 @@ aiofiles
 pika
 requests
 requests_toolbelt
+Pillow
