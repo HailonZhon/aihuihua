@@ -20,7 +20,7 @@ logging.getLogger("pika").setLevel(logging.WARNING)
 logging.getLogger("ImageProcessor").setLevel(logging.WARNING)
 # 主模块的 logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)  # 设置当前模块的日志级别为 WARNING
+logger.setLevel(logging.WARNING)  # 设置当前模块的日志级别为 WARNING
 app = FastAPI()
 
 # 允许的跨域源列表
@@ -57,7 +57,10 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
+            start_time = datetime.datetime.now()
             data = await websocket.receive_bytes()
+            receive_data_time = datetime.datetime.now() - start_time
+            logger.warning(f"receive_bytes:接收来自设备的图片耗时 {receive_data_time.total_seconds()} 秒")
             # 处理图片
             start_time = datetime.datetime.now()
             processed_image = await process_image(data, logger)
