@@ -46,8 +46,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 UPLOAD_DIR = Path("data/uploaded_images")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-# base_url = os.getenv("BASE_URL")
-base_url = 'http://localhost:3000'
+base_url = os.getenv("BASE_URL", "http://localhost:3000")
 image_processor = ImageProcessor(base_url)
 
 
@@ -93,8 +92,7 @@ async def process_image(data, logger):
     prompt_workflow["29"]["inputs"]["height"] = 884
 
     uuid_value = str(uuid.uuid4())
-    # rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
-    rabbitmq_host = "localhost"
+    rabbitmq_host = os.getenv('RABBITMQ_HOST', 'localhost')
     try:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
         channel = connection.channel()

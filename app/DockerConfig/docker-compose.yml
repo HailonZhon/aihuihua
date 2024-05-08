@@ -26,7 +26,7 @@ services:
       - internal
     environment:
       - RABBITMQ_HOST=rabbitmq
-      - WS_URL=ws://66.114.112.70:40391/ws?clientId=
+      - WS_URL=ws://66.114.112.70:40563/ws?clientId=
     healthcheck:
       test: [ "CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 40391))" ]
       interval: 30s

@@ -86,9 +86,7 @@ if __name__ == "__main__":
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
     channel = connection.channel()
     channel.queue_declare(queue='uuid_queue')
-    # ws_url = os.getenv('WS_URL', 'ws://66.114.112.70:40391/ws?clientId=')
-    ws_url = "ws://127.0.0.1:3001/ws?clientId="
-
+    ws_url = os.getenv('WS_URL', 'ws://127.0.0.1:3001/ws?clientId=')
     def callback(ch, method, properties, body):
         uuid = body.decode()
         logger.info(f"接收到UUID：{uuid}")
